@@ -4,4 +4,5 @@ a docker management system based on python
 
 ## 展示
 * Dashboard
- ![image](https://github.com/CHUNL09/dockerit/show_pics/login.png)
+
+![image](https://github.com/CHUNL09/dockerit/show_pics/login.png)
