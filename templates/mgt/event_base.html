@@ -1,0 +1,102 @@
+{% extends "../base.html" %}
+{% block page_header %}
+<link rel="stylesheet" href="{{ static_url('plugins/datatables/dataTables.bootstrap.css') }}">
+<link rel="stylesheet" href="{{ static_url('plugins/daterangepicker/daterangepicker.css') }}">
+
+{% end %}
+{% block content_header %}
+    <h1>事件管理</h1>
+{% end %}
+{% block content %}
+<div class="box">
+  <div class="box-header">
+    <h3 class="box-title">事件(Event)管理</h3>
+  </div>
+  <!-- /.box-header -->
+  <div class="box-body">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="form-group">
+          <label>Date and time range:</label>
+
+          <div class="input-group">
+            <div class="input-group-addon">
+              <i class="fa fa-clock-o"></i>
+            </div>
+            <input type="text" class="form-control pull-left" id="reservationtime">
+          </div>
+          <!-- /.input group -->
+        </div>
+
+      </div>
+      <div class="col-md-4">
+        <button type="button" class="btn btn-info pull-right" id="search_btn">Search</button>
+
+      </div>
+    </div>
+  </div>
+  <!-- /.box-body -->
+
+<div class="box">
+  <table id="res_table" class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                  <th>id</th>
+                  <th>item_type</th>
+                  <th>key_action</th>
+                  <th>date</th>
+                  <th>detail</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+    </table>
+</div>
+
+
+</div>
+{% end %}
+{% block js_part %}
+<!-- DataTables -->
+<script src="{{ static_url('plugins/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ static_url('plugins/datatables/dataTables.bootstrap.min.js') }}"></script>
+<script src="{{ static_url('plugins/daterangepicker/moment.min.js') }}"></script>
+<script src="{{ static_url('plugins/daterangepicker/daterangepicker.js') }}"></script>
+
+
+
+
+<script>
+
+  $(function () {
+    //Date range picker
+    $('#reservation').daterangepicker();
+    //Date range picker with time picker
+    $('#reservationtime').daterangepicker({timePicker: true, timePickerIncrement: 30, format: 'MM/DD/YYYY h:mm A'});
+    console.log("finish");
+
+    $("#search_btn").click(function () {
+
+        var sent_data = $('#reservationtime').val();
+        console.log(sent_data);
+        $.ajax({
+          url: '/mgt/event/search',
+          type: 'POST',
+          data: {time_range: sent_data},
+          success: function (data) {
+              var raw_data = JSON.parse(data);
+              console.log(raw_data);
+              var tboday_data = "";
+              for (var event in raw_data){
+                tboday_data += "<tr><td>"+raw_data[event]['id']+"</td><td>"+raw_data[event]['item_type']+"</td><td>"
+               +raw_data[event]['key_action']+"</td><td>"+raw_data[event]['date']+"</td><td>"+raw_data[event]['details']+"</td></tr>";
+
+              }
+              $("#res_table").find("tbody").html(tboday_data);
+          }
+        });
+
+      });
+  });
+</script>
+{% end %}

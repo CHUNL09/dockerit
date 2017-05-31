@@ -1,0 +1,241 @@
+{% extends "../base.html" %}
+{% block page_header %}
+<link rel="stylesheet" href="{{ static_url('plugins/datatables/dataTables.bootstrap.css') }}">
+{% end %}
+{% block content_header %}
+    <h1>镜像管理</h1>
+{% end %}
+{% block content %}
+<div class="box">
+  <div class="box-header">
+    <h3 class="box-title">镜像(Image)管理</h3><button type="button" class="btn btn-xs btn-info pull-right" data-toggle="modal" data-target="#addmodal">Build镜像</button>
+  </div>
+  <!-- /.box-header -->
+  <div class="box-body">
+    <table id="example1" class="table table-bordered table-striped">
+      <thead>
+      <tr>
+        <th >Id</th>
+        <th >REPOSITORY&TAG</th>
+        <th >Created</th>
+        <th >SIZE</th>
+        <th >所属节点</th>
+        <th >操作</th>
+      </tr>
+      </thead>
+      <tbody>
+        {% for image in image_list %}
+        <tr>
+          <td>{{image['Id']}}</td>
+          <td>{{image['Repository']}}</td>
+          <td>{{image['Created']}}</td>
+          <td>{{image['Size']}}</td>
+          <td>{{image['node']}}</td>
+          <td>
+            <div class="btn-group">
+              <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Action <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li><a href="http://{{image['node']}}/images/{{image['Id']}}/get" target="_blank">Export Image</a></li>
+                <li><a href="#" data-toggle="modal" data-target="#alertmodal" data-image_id="{{image['Id']}}" data-node="{{image['node']}}">Tag Image</a></li>
+                <li><a href="javascript:void(0)" onclick="image_action(this,'delete')" image_id="{{image['Id']}}" node="{{image['node']}}">Delete Image</a></li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        {% end %}
+      </tbody>
+    </table>
+  </div>
+  <!-- /.box-body -->
+
+<!-- Modal -->
+<div class="modal fade" id="condetail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel"></h4>
+      </div>
+      <div class="modal-body" style="word-break:break-all">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal2 -->
+<div class="modal fade" id="alertmodal" tabindex="-1" role="dialog" aria-labelledby="alertmodal">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-body" >
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn_update_tag">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal3 -->
+<div class="modal fade" id="addmodal" tabindex="-1" role="dialog" aria-labelledby="addmodal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"></h4>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="btn_build_image">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Modal4 -->
+<div class="modal fade" id="updatemodal" tabindex="-1" role="dialog" aria-labelledby="updatemodal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"></h4>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="ModalUpdateConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% end %}
+{% block js_part %}
+<!-- DataTables -->
+<script src="{{ static_url('plugins/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ static_url('plugins/datatables/dataTables.bootstrap.min.js') }}"></script>
+
+<script>
+  function image_action(obj,action_type) {
+          var action = $(action_type);
+          var image_id = $(obj).attr('image_id');
+          var node = $(obj).attr('node');
+          $.ajax({
+              url: '/api/image',
+              type: 'GET',
+              data:{
+                'image_id':image_id,
+                'node_ip_port':node,
+                'action': action_type
+              }
+            });
+            window.location.reload(true);
+    }
+
+$(function () {
+
+    $("#condetail").on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget);
+      var con_id = button.data('con_id');
+      var node = button.data('node');
+
+      var req_url = 'http://'+node+'/containers/'+con_id+'/json';
+      $.ajax({
+          url: '/api/con',
+          type: 'GET',
+          data:{
+            'con_id':con_id,
+            'node_ip_port':node,
+            'type':'GET',
+            'action': 'inspect'
+          },
+          success: function (data) {
+              var table_content = data;
+              $("#condetail").find(".modal-body").text(table_content);
+          }
+        });
+
+    });
+
+  $("#alertmodal").on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget);
+      var image_id = button.data('image_id');
+      var ip_port = button.data('node');
+      var form_content = '<form class="form-horizontal" id="update-tag-form"><div class="box-body">' +
+              '<div class="form-group">' +
+              '<label class="col-sm-2 control-label">NewTag</label>' +
+              '<div class="col-sm-10">' +
+              '<input type="text" class="form-control" placeholder="New Tag Name" name="tag_name"></div></div>' +
+               '<div class="form-group">' +
+              '<label class="col-sm-2 control-label">NewRepo</label>' +
+              '<div class="col-sm-10">' +
+              '<input type="text" class="form-control" placeholder="New Repo" name="new_repo"></div></div>' +
+              '</div></form>';
+      $(this).find('.modal-body').html(form_content);
+
+      $("#btn_update_tag").click(function () {
+        var form_data = $('#alertmodal').find("#update-tag-form").serialize();
+        var sent_data = form_data + '&action=update_tag&image_id='+image_id+'&node_ip_port='+ip_port;
+        $.ajax({
+          url: '/api/image',
+          type: 'POST',
+          data: sent_data
+        });
+        $('#alertmodal').modal('hide');
+        window.location.reload(true);
+
+      });
+
+    });
+
+    $("#example1").DataTable();
+
+    $("#addmodal").on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget);
+      var ip_port = button.data('node');
+      var form_content = '<form class="form-horizontal" id="build-image-form"><div class="box-body">' +
+              '<div class="form-group">' +
+              '<label class="col-sm-2 control-label">Dockerfile</label>' +
+              '<div class="col-sm-10">' +
+              '<textarea class="form-control" placeholder="Dockerfile" name="dockerfile" id="dockerfile"></textarea></div></div>' +
+               '<div class="form-group">' +
+              '<label class="col-sm-2 control-label">Tag</label>' +
+              '<div class="col-sm-10">' +
+              '<input type="text" class="form-control" placeholder="name:tag" name="tag" id="image_tag"></div></div>' +
+              '<label class="col-sm-2 control-label">IP:Port</label>' +
+              '<div class="col-sm-10">' +
+              '<input type="text" class="form-control" placeholder="IP:Port" name="node" id="ip_port"></div></div>' +
+              '</div></form>';
+      $(this).find('.modal-body').html(form_content);
+      $("#btn_build_image").click(function () {
+        var dockerfile = $('#addmodal').find("#build-image-form").find("#dockerfile").val();
+        var image_tag = $('#addmodal').find("#build-image-form").find("#image_tag").val();
+        var ip_port = $('#addmodal').find("#build-image-form").find("#ip_port").val();
+        $.ajax({
+          url: '/api/image',
+          type: 'POST',
+          data: {
+            'dockerfile':dockerfile,
+            'image_tag': image_tag,
+            'action': 'build_image',
+            'node_ip_port':ip_port
+          }
+        });
+        $('#alertmodal').modal('hide');
+        window.location.reload(true);
+      });
+    });
+
+});
+</script>
+{% end %}
